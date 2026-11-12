@@ -1,0 +1,29 @@
+.gitignore
+  s_c47abaa77facb4::t_f879821ef87d33 29
+.pre-commit-config.yaml
+  s_c47abaa77facb4::t_1a3c365f97d4fc 13-14
+TEXTUAL_GAMES_README.md
+  s_c47abaa77facb4::t_3993984b54c178 57,62-70,75-76,78-81,84-87,89-106,109-112,114-117,119-125,128-132
+play.sh
+  s_c47abaa77facb4::t_983922f260b007 1-4,6-14,17-71,73,76,79,82-91,94-95
+requirements-dev.txt
+  s_c47abaa77facb4::t_e0cd24cf32b8b8 1-12
+requirements.txt
+  s_c47abaa77facb4::t_c7f54cf3ff66f1 1-11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.12",
+  "base_commit_sha": "e2aacd0f5f83d48290b906b609a09d4195c97342",
+  "prompts": {},
+  "sessions": {
+    "s_c47abaa77facb4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "70d35965-4d09-4e51-991f-ea8bb6144889",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Weiss-C <140757798+Weiss-C@users.noreply.github.com>"
+    }
+  }
+}
