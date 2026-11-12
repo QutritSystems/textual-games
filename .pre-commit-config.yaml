@@ -10,8 +10,7 @@ repos:
     hooks:
       - id: run-tests
         name: Run Python Tests
-        entry: ./venv/bin/python
-        language: script
+        entry: ./play.sh test
+        language: system
         pass_filenames: false
         always_run: true
-        entry: bash -c "source venv/bin/activate && python test_core.py && python test_battleship_arena.py && python test_auto_battle_logic.py && python test_number_guessing_ai.py"

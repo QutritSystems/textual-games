@@ -4,17 +4,19 @@ Textual Games Launcher
 Choose from multiple games built with Textual!
 """
 
+from pathlib import Path
 import subprocess
 import sys
+
 from textual.app import App, ComposeResult
-from textual.containers import Container, Vertical, Horizontal
-from textual.widgets import Static, Button, Header, Footer, Label
+from textual.containers import Container, Vertical
+from textual.widgets import Static, Button, Header, Footer
 from textual import events
 
 
 class GameLauncher(App):
     """Main game launcher interface."""
-    
+
     CSS = """
     Screen {
         align: center middle;
@@ -80,48 +82,71 @@ class GameLauncher(App):
         padding: 1;
     }
     """
-    
+
     def compose(self) -> ComposeResult:
         yield Header()
-        
+
         with Container(classes="launcher"):
             yield Static("🎮 TEXTUAL GAMES LAUNCHER 🎮", classes="title")
-            
+
             with Vertical(classes="game-grid"):
                 # Snake Game
                 with Container(classes="game-card"):
                     yield Static("🐍 Snake Game", classes="game-title")
-                    yield Static("Classic snake game!\nEat food, grow longer,\navoid walls and yourself!", classes="game-desc")
+                    yield Static(
+                        "Classic snake game!\nEat food, grow longer,\navoid walls and yourself!",
+                        classes="game-desc",
+                    )
                     yield Button("Play Snake", id="snake", variant="success")
-                
-                # Number Guessing Game  
+
+                # Number Guessing Game
                 with Container(classes="game-card"):
                     yield Static("🎯 Number Guessing", classes="game-title")
-                    yield Static("Guess the secret number!\nMultiple difficulty levels,\nbeat your high score!", classes="game-desc")
+                    yield Static(
+                        "Guess the secret number!\nMultiple difficulty levels,\nbeat your high score!",
+                        classes="game-desc",
+                    )
                     yield Button("Play Guessing", id="guessing", variant="primary")
-                
+
                 # ASCII Art Generator
                 with Container(classes="game-card"):
                     yield Static("🎨 ASCII Art Generator", classes="game-title")
-                    yield Static("Create beautiful ASCII art!\nMultiple font styles,\nborders and effects!", classes="game-desc")
+                    yield Static(
+                        "Create beautiful ASCII art!\nMultiple font styles,\nborders and effects!",
+                        classes="game-desc",
+                    )
                     yield Button("Create ASCII Art", id="ascii-art", variant="primary")
-                
+
                 # Battleship Game
                 with Container(classes="game-card"):
                     yield Static("🚢 潛艇對決", classes="game-title")
-                    yield Static("戰艦對戰遊戲！\n智能 AI 對手，\n策略性回合制戰鬥！", classes="game-desc")
+                    yield Static(
+                        "戰艦對戰遊戲！\n智能 AI 對手，\n策略性回合制戰鬥！",
+                        classes="game-desc",
+                    )
                     yield Button("開始潛艇對決", id="battleship", variant="error")
-                
+
                 # Coming Soon placeholder
                 with Container(classes="game-card"):
                     yield Static("🚀 More Games", classes="game-title")
-                    yield Static("More games coming soon!\nTic-tac-toe, memory game,\nword puzzles and more!", classes="game-desc")
-                    yield Button("Coming Soon", id="coming-soon", variant="warning", disabled=True)
-            
-            yield Static("Press Q to quit | Click a game to start playing!", classes="footer-info")
-        
+                    yield Static(
+                        "More games coming soon!\nTic-tac-toe, memory game,\nword puzzles and more!",
+                        classes="game-desc",
+                    )
+                    yield Button(
+                        "Coming Soon",
+                        id="coming-soon",
+                        variant="warning",
+                        disabled=True,
+                    )
+
+            yield Static(
+                "Press Q to quit | Click a game to start playing!",
+                classes="footer-info",
+            )
+
         yield Footer()
-    
+
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle game selection."""
         if event.button.id == "snake":
@@ -134,24 +159,25 @@ class GameLauncher(App):
             self.launch_game("battleship_game.py", "潛艇對決")
         elif event.button.id == "coming-soon":
             self.notify("More games coming soon! Stay tuned! 🚀")
-    
+
     def launch_game(self, game_file: str, game_name: str) -> None:
-        """Launch a game in a new process."""
+        """Launch a bundled game with the interpreter running this launcher."""
+        game_path = Path(__file__).resolve().parent / game_file
+        if not game_path.is_file():
+            self.notify(f"Cannot find {game_name}: {game_path.name}", severity="error")
+            return
+
         try:
             self.notify(f"Starting {game_name}...")
-            
-            # Exit this launcher
             self.exit()
-            
-            # Start the game
-            subprocess.run([
-                "/Users/databird/textual-env/bin/python", 
-                f"/Users/databird/textual-games/{game_file}"
-            ])
-            
-        except Exception as e:
-            self.notify(f"Error launching {game_name}: {e}")
-    
+            subprocess.run(
+                [sys.executable, str(game_path)],
+                cwd=game_path.parent,
+                check=False,
+            )
+        except OSError as error:
+            self.notify(f"Error launching {game_name}: {error}", severity="error")
+
     def on_key(self, event: events.Key) -> None:
         """Handle keyboard shortcuts."""
         if event.key == "q":
@@ -173,7 +199,7 @@ def main():
     print("  🐍 Snake Game - Classic arcade action")
     print("  🎯 Number Guessing - Mind puzzle challenge")
     print()
-    
+
     app = GameLauncher()
     app.title = "Textual Games"
     app.run()

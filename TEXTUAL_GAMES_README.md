@@ -54,66 +54,81 @@ Strategic number guessing game with multiple difficulty levels!
 5. Beat your personal best score!
 
 ### 🚀 Game Launcher (`game_launcher.py`)
-Centralized launcher for all games with a beautiful interface!
+Centralized launcher for the playable games with a visual interface.
 
 **Features:**
 - Visual game selection menu
 - Game descriptions and previews
-- Keyboard shortcuts (1, 2, Q)
-- Clean, modern UI design
+- Keyboard shortcuts (1–4, Q)
+- Starts games with the same Python interpreter as the launcher
+
+### 🚢 Battleship (`battleship_game.py`)
+A turn-based Battleship game against an AI opponent.
+
+### 🤖 Battleship AI Arena (`battleship_arena.py`)
+A sandbox for running and hot-reloading the strategies in
+`battleship_strategies.py`.
 
 ## 🛠️ Installation & Setup
 
 ### Prerequisites
-- Python 3.8+ (tested with Python 3.13)
-- Textual library
+- Python 3.10 or newer
+- A POSIX shell (only needed for `play.sh`)
 
-### Installation Steps
+### Quick start
 
-1. **Create virtual environment**:
-   ```bash
-   python3 -m venv textual-env
-   source textual-env/bin/activate
-   ```
+From the repository root, create an isolated environment and install the
+version-pinned runtime and development dependencies:
 
-2. **Install Textual**:
-   ```bash
-   pip install "textual[dev]>=0.45.0"
-   ```
+```bash
+./play.sh setup
+./play.sh test
+./play.sh launcher
+```
 
-3. **Run games**:
-   ```bash
-   # Launch game selector
-   python game_launcher.py
-   
-   # Or run games directly
-   python snake_game.py
-   python number_guessing_game.py
-   ```
+`setup` creates `.venv` in the repository. It is ignored by Git, and every
+subsequent `play.sh` command uses it automatically. `requirements.txt` pins the
+runtime; `requirements-dev.txt` adds the pinned development tooling, including
+pre-commit.
+
+### Manual setup
+
+Use this on Windows or when you do not want to use the shell launcher:
+
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install --upgrade pip
+.venv/bin/python -m pip install --requirement requirements-dev.txt
+.venv/bin/python test_all_games.py
+.venv/bin/python test_core.py
+.venv/bin/python test_battleship_arena.py
+.venv/bin/python test_auto_battle_logic.py
+.venv/bin/python test_number_guessing_ai.py
+```
+
+On Windows, replace `.venv/bin/python` with `.venv\Scripts\python.exe`.
+
+To enable the repository hooks after setup:
+
+```bash
+.venv/bin/pre-commit install
+```
 
 ## 🎮 How to Play / 如何遊玩
 
-### Quick Start / 快速開始
 ```bash
-# 進入遊戲資料夾 / Navigate to games directory
-cd textual-games
-
-# 使用便捷腳本 / Use convenience script
-./play.sh launcher    # 啟動遊戲選擇器 / Start game launcher
-./play.sh snake      # 直接啟動貪食蛇 / Direct launch Snake Game
-./play.sh guess      # 直接啟動猜數字 / Direct launch Number Guessing
+./play.sh launcher    # 遊戲選擇器
+./play.sh snake       # 貪食蛇
+./play.sh guess       # 猜數字
+./play.sh ascii       # ASCII 藝術產生器
+./play.sh battleship  # 潛艇對決
+./play.sh arena       # Battleship AI Arena
 ```
 
-### Manual Launch / 手動啟動
-```bash
-# 激活虛擬環境 / Activate virtual environment
-source ../textual-env/bin/activate
+All commands can be run from any current working directory because the script
+resolves its own location. To select a different interpreter, set `PYTHON`,
+for example: `PYTHON=python3.12 ./play.sh test`.
 
-# 啟動遊戲 / Launch games
-python game_launcher.py      # 遊戲選擇器 / Game launcher
-python snake_game.py         # 貪食蛇遊戲 / Snake Game
-python number_guessing_game.py # 猜數字遊戲 / Number Guessing Game
-```
 
 ## 🎨 Technical Features
 

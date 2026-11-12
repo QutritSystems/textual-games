@@ -18,12 +18,21 @@ from pathlib import Path
 from textual.app import App, ComposeResult
 from textual.containers import Container, Horizontal
 from textual.widgets import (
-    Static, Label, Button, Input, Header, Footer, 
-    Select, ProgressBar
+    Static,
+    Label,
+    Button,
+    Input,
+    Header,
+    Footer,
+    Select,
+    ProgressBar,
 )
 from textual.reactive import reactive
 from textual import work
+from textual.css.query import NoMatches
+
 import number_guessing_strategies
+
 
 class StrategyLoader:
     """Loads a changed strategy without mutating the currently active module."""
@@ -43,7 +52,7 @@ class StrategyLoader:
         fingerprint = self._fingerprint_file()
         if fingerprint is None:
             return self._module
-            
+
         if fingerprint == self._fingerprint:
             return self._module
 
@@ -63,13 +72,13 @@ class StrategyLoader:
         except Exception as e:
             # Fallback to the last valid loaded module
             print(f"Error loading strategy: {e}")
-            
+
         return self._module
 
 
 class NumberGuessingGame(App):
     """Number guessing game with multiple difficulty levels."""
-    
+
     CSS = """
     Screen {
         align: center middle;
@@ -161,7 +170,7 @@ class NumberGuessingGame(App):
         margin: 0;
     }
     """
-    
+
     # Game state
     secret_number = reactive(0)
     attempts = reactive(0)
@@ -172,75 +181,96 @@ class NumberGuessingGame(App):
     min_number = reactive(1)
     max_number = reactive(100)
     best_score = reactive(999)
-    
+
     def __init__(self):
         super().__init__()
         self.guesses = []
         self.difficulty_settings = {
-            "Easy": (1, 50, 15),      # min, max, attempts
+            "Easy": (1, 50, 15),  # min, max, attempts
             "Medium": (1, 100, 10),
             "Hard": (1, 200, 7),
-            "Expert": (1, 500, 5)
+            "Expert": (1, 500, 5),
         }
         self.auto_ai_running = False
         self.auto_ai_worker = None
         self.auto_ai_generation = 0
-        self.strategy_loader = StrategyLoader(Path(number_guessing_strategies.__file__).resolve())
-        
+        self.strategy_loader = StrategyLoader(
+            Path(number_guessing_strategies.__file__).resolve()
+        )
+
     def compose(self) -> ComposeResult:
         yield Header()
-        
+
         with Container(classes="game-container"):
             yield Static("🎯 NUMBER GUESSING GAME 🎯", classes="title")
-            
+
             # Game info panel
             with Container(classes="game-info"):
-                yield Label(f"Guess the number between {self.min_number} and {self.max_number}!", id="range-info")
-                yield Label(f"Attempts remaining: {self.max_attempts - self.attempts}", id="attempts-info")
+                yield Label(
+                    f"Guess the number between {self.min_number} and {self.max_number}!",
+                    id="range-info",
+                )
+                yield Label(
+                    f"Attempts remaining: {self.max_attempts - self.attempts}",
+                    id="attempts-info",
+                )
                 yield ProgressBar(total=self.max_attempts, id="progress")
-            
+
             # Difficulty selection
             with Container(classes="difficulty-area"):
                 yield Label("Difficulty Level:", id="difficulty-label")
-                yield Select([
-                    ("Easy (1-50, 15 attempts)", "Easy"),
-                    ("Medium (1-100, 10 attempts)", "Medium"), 
-                    ("Hard (1-200, 7 attempts)", "Hard"),
-                    ("Expert (1-500, 5 attempts)", "Expert")
-                ], value="Medium", id="difficulty-select")
-            
+                yield Select(
+                    [
+                        ("Easy (1-50, 15 attempts)", "Easy"),
+                        ("Medium (1-100, 10 attempts)", "Medium"),
+                        ("Hard (1-200, 7 attempts)", "Hard"),
+                        ("Expert (1-500, 5 attempts)", "Expert"),
+                    ],
+                    value="Medium",
+                    id="difficulty-select",
+                )
+
             # Input area
             with Container(classes="input-area"):
                 yield Label("Enter Your Guess:", id="input-label")
-                yield Input(placeholder="Enter your guess...", id="guess-input", type="integer")
+                yield Input(
+                    placeholder="Enter your guess...", id="guess-input", type="integer"
+                )
                 with Horizontal():
                     yield Button("Submit Guess", id="submit", variant="primary")
                     yield Button("New Game", id="new-game", variant="success")
                     yield Button("Give Up", id="give-up", variant="error")
                     yield Button("AI 玩一局", id="start-ai", variant="warning")
-                    yield Button("停止 AI", id="stop-ai", variant="default", disabled=True)
-            
+                    yield Button(
+                        "停止 AI", id="stop-ai", variant="default", disabled=True
+                    )
+
             # Hint area
             with Container(classes="hint-area"):
                 yield Label("Make your first guess!", id="hint")
                 yield Label("", id="guess-history")
-            
+
             # Stats panel
             with Container(classes="stats"):
-                yield Label(f"Best Score: {self.best_score if self.best_score < 999 else 'None'}", id="best-score")
-                yield Label(f"Current Difficulty: {self.difficulty}", id="current-difficulty")
-        
+                yield Label(
+                    f"Best Score: {self.best_score if self.best_score < 999 else 'None'}",
+                    id="best-score",
+                )
+                yield Label(
+                    f"Current Difficulty: {self.difficulty}", id="current-difficulty"
+                )
+
         yield Footer()
-    
+
     def on_mount(self) -> None:
         """Initialize game when app starts."""
         self.new_game()
-        
+
     async def on_unmount(self) -> None:
         if self.auto_ai_worker:
             self.auto_ai_worker.cancel()
             await self.auto_ai_worker.wait()
-        
+
     def new_game(self) -> None:
         """Start a new game."""
         # Get difficulty settings
@@ -248,14 +278,14 @@ class NumberGuessingGame(App):
         self.min_number = min_num
         self.max_number = max_num
         self.max_attempts = max_att
-        
+
         # Reset game state
         self.secret_number = random.randint(self.min_number, self.max_number)
         self.attempts = 0
         self.game_over = False
         self.won = False
         self.guesses = []
-        
+
         # Update UI
         self.query_one("#range-info", Label).update(
             f"Guess the number between {self.min_number} and {self.max_number}!"
@@ -266,34 +296,38 @@ class NumberGuessingGame(App):
         self.query_one("#hint", Label).update("Make your first guess!")
         self.query_one("#guess-history", Label).update("")
         self.query_one("#guess-input", Input).value = ""
-        
+
         # Reset progress bar
         progress_bar = self.query_one("#progress", ProgressBar)
         progress_bar.total = self.max_attempts
         progress_bar.progress = 0
-        
+
         # Update difficulty display
-        self.query_one("#current-difficulty", Label).update(f"Current Difficulty: {self.difficulty}")
-        
+        self.query_one("#current-difficulty", Label).update(
+            f"Current Difficulty: {self.difficulty}"
+        )
+
         self.notify(f"New {self.difficulty} game started! Good luck! 🍀")
         self.query_one("#guess-input", Input).focus()
-    
+
     def make_guess(self, guess: int) -> None:
         """Process a guess."""
         if self.game_over:
             return
-        
+
         self.attempts += 1
         self.guesses.append(guess)
-        
+
         # Update progress bar
         progress_bar = self.query_one("#progress", ProgressBar)
         progress_bar.progress = self.attempts
-        
+
         # Update attempts counter
         remaining = self.max_attempts - self.attempts
-        self.query_one("#attempts-info", Label).update(f"Attempts remaining: {remaining}")
-        
+        self.query_one("#attempts-info", Label).update(
+            f"Attempts remaining: {remaining}"
+        )
+
         # Check guess
         if guess == self.secret_number:
             self.win_game()
@@ -309,25 +343,27 @@ class NumberGuessingGame(App):
                 self.query_one("#hint", Label).update(hint)
             else:
                 self.lose_game()
-        
+
         # Update guess history (show last 5 guesses)
         recent_guesses = self.guesses[-5:]
         history = "Recent guesses: " + " → ".join(map(str, recent_guesses))
         self.query_one("#guess-history", Label).update(history)
-        
+
         # Check if out of attempts
         if remaining == 0 and not self.won:
             self.lose_game()
-    
+
     def win_game(self) -> None:
         """Handle winning the game."""
         self.won = True
         self.game_over = True
-        
+
         # Update best score
         if self.attempts < self.best_score:
             self.best_score = self.attempts
-            self.query_one("#best-score", Label).update(f"Best Score: {self.best_score}")
+            self.query_one("#best-score", Label).update(
+                f"Best Score: {self.best_score}"
+            )
             self.query_one("#hint", Label).update(
                 f"🎉 CONGRATULATIONS! You found {self.secret_number} in {self.attempts} attempts! NEW RECORD! 🏆"
             )
@@ -337,7 +373,7 @@ class NumberGuessingGame(App):
                 f"🎉 CONGRATULATIONS! You found {self.secret_number} in {self.attempts} attempts!"
             )
             self.notify("🎉 You won! Great job! 🎉")
-    
+
     def lose_game(self) -> None:
         """Handle losing the game."""
         self.game_over = True
@@ -345,18 +381,18 @@ class NumberGuessingGame(App):
             f"😔 Game Over! The number was {self.secret_number}. Better luck next time!"
         )
         self.notify("😔 Better luck next time!")
-    
+
     def on_select_changed(self, event: Select.Changed) -> None:
         """Handle difficulty selection change."""
         if event.select.id == "difficulty-select":
             self.difficulty = event.value
             self.new_game()
-    
+
     def on_input_submitted(self, event: Input.Submitted) -> None:
         """Handle input submission."""
         if event.input.id == "guess-input":
             self.submit_guess()
-    
+
     async def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button presses."""
         if event.button.id == "submit":
@@ -375,7 +411,7 @@ class NumberGuessingGame(App):
                 return
             if self.game_over:
                 self.new_game()
-                
+
             self.auto_ai_running = True
             self.query_one("#start-ai", Button).disabled = True
             self.query_one("#stop-ai", Button).disabled = False
@@ -383,13 +419,13 @@ class NumberGuessingGame(App):
             self.query_one("#give-up", Button).disabled = True
             self.query_one("#difficulty-select").disabled = True
             self.query_one("#guess-input", Input).disabled = True
-            
+
             self.auto_ai_generation += 1
             self.auto_ai_worker = self.run_ai_guesser(self.auto_ai_generation)
-            
+
         elif event.button.id == "stop-ai":
             self.stop_ai_guesser()
-            
+
     def stop_ai_guesser(self) -> None:
         self.auto_ai_running = False
         if self.auto_ai_worker:
@@ -407,32 +443,36 @@ class NumberGuessingGame(App):
     async def run_ai_guesser(self, generation: int) -> None:
         try:
             while self.auto_ai_running and not self.game_over:
-                self.query_one("#hint", Label).update("🤖 AI 正在精密計算下一手最優解...")
+                self.query_one("#hint", Label).update(
+                    "🤖 AI 正在精密計算下一手最優解..."
+                )
                 await asyncio.sleep(0.6)
-                
+
                 if not self.auto_ai_running or self.game_over:
                     break
-                    
+
                 strategy_module = self.strategy_loader.load()
-                
+
                 history = []
                 for g in self.guesses:
                     if g < self.secret_number:
                         history.append((g, "low"))
                     elif g > self.secret_number:
                         history.append((g, "high"))
-                        
-                guess, reasoning = strategy_module.decide_guess(self.min_number, self.max_number, history)
-                
+
+                guess, reasoning = strategy_module.decide_guess(
+                    self.min_number, self.max_number, history
+                )
+
                 self.query_one("#hint", Label).update(reasoning)
                 await asyncio.sleep(0.8)
-                
+
                 if not self.auto_ai_running or self.game_over:
                     break
-                    
+
                 self.make_guess(guess)
                 await asyncio.sleep(0.6)
-                
+
         except asyncio.CancelledError:
             pass
         except Exception as e:
@@ -441,21 +481,25 @@ class NumberGuessingGame(App):
             if self.auto_ai_generation == generation:
                 self.auto_ai_running = False
                 self.auto_ai_worker = None
-                self.query_one("#start-ai", Button).disabled = False
-                self.query_one("#stop-ai", Button).disabled = True
-                self.query_one("#submit", Button).disabled = False
-                self.query_one("#give-up", Button).disabled = False
-                self.query_one("#difficulty-select").disabled = False
-                self.query_one("#guess-input", Input).disabled = False
-                self.query_one("#guess-input", Input).focus()
-    
+                try:
+                    self.query_one("#start-ai", Button).disabled = False
+                    self.query_one("#stop-ai", Button).disabled = True
+                    self.query_one("#submit", Button).disabled = False
+                    self.query_one("#give-up", Button).disabled = False
+                    self.query_one("#difficulty-select").disabled = False
+                    self.query_one("#guess-input", Input).disabled = False
+                    self.query_one("#guess-input", Input).focus()
+                except NoMatches:
+                    # The app can unmount while a cancelled worker is unwinding.
+                    pass
+
     def submit_guess(self) -> None:
         """Submit the current guess."""
         if self.game_over:
             return
-            
+
         guess_input = self.query_one("#guess-input", Input)
-        
+
         try:
             guess = int(guess_input.value)
             if self.min_number <= guess <= self.max_number:
@@ -467,7 +511,7 @@ class NumberGuessingGame(App):
                 )
         except ValueError:
             self.query_one("#hint", Label).update("❌ Please enter a valid number!")
-            
+
         guess_input.focus()
 
 
@@ -475,7 +519,7 @@ def main():
     """Run the Number Guessing game."""
     print("🎯 Starting Number Guessing Game...")
     print("Loading game...")
-    
+
     app = NumberGuessingGame()
     app.title = "Number Guessing Game"
     app.run()
